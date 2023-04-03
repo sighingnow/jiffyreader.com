@@ -8,7 +8,7 @@ import siteOverrides from './siteOverrides';
 const { MAX_FIXATION_PARTS, FIXATION_LOWER_BOUND, BR_WORD_STEM_PERCENTAGE } = defaultPrefs;
 
 // which tag's content should be ignored from bolded
-const IGNORE_NODE_TAGS = ['STYLE', 'SCRIPT', 'BR-SPAN', 'BR-FIXATION', 'BR-BOLD', 'BR-EDGE', 'SVG', 'INPUT', 'TEXTAREA'];
+const IGNORE_NODE_TAGS = ['STYLE', 'SCRIPT', 'BR-SPAN', 'BR-FIXATION', 'BR-BOLD', 'BR-EDGE', 'SVG', 'INPUT', "PRE", 'TEXTAREA', "PRE", "CODE"];
 const MUTATION_TYPES = ['childList', 'characterData'];
 
 const IGNORE_MUTATIONS_ATTRIBUTES = ['br-ignore-on-mutation'];
@@ -24,7 +24,9 @@ let excludeByOrigin;
 
 // making half of the letters in a word bold
 function highlightText(sentenceText) {
-	return sentenceText.replace(/\p{L}+/gu, (word) => {
+	// match english only
+	let pattern = /\w+/gu;  // /\p{L}+/gu
+	return sentenceText.replace(pattern, (word) => {
 		const { length } = word;
 
 		const brWordStemWidth = length > 3 ? Math.round(length * BR_WORD_STEM_PERCENTAGE) : length;
@@ -58,6 +60,10 @@ function makeFixations(/** @type string */ textContent) {
 function parseNode(/** @type Element */ node) {
 	// some websites add <style>, <script> tags in the <body>, ignore these tags
 	if (!node?.parentElement?.tagName || IGNORE_NODE_TAGS.includes(node.parentElement.tagName)) {
+		return;
+	}
+	// ignore github code blocks
+	if (node?.parentElement?.tagName === "TABLE" && node?.parentElement?.classList?.contains("highlight")) {
 		return;
 	}
 
